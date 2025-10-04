@@ -1,17 +1,13 @@
-# PyCharm
 .idea/
 *.iml
 
-# Python
 venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Windows
 Thumbs.db
 Desktop.ini
 
-# Скрипты с LF (для избежания CRLF предупреждений)
 *.sh eol=lf
