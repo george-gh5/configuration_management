@@ -1,12 +1,9 @@
-#!/bin/bash
-echo "Тест без параметров:"
-python emulator.py
+#!/bin/sh
 
-echo "Тест с VFS-путём:"
-python emulator.py --vfs_path vfs/simple_vfs
+python emulator.py --vfs_path vfs --startup_script scripts/startup.emulator
 
-echo "Тест со стартовым скриптом:"
-python emulator.py --startup_script scripts/startup.emulator
+# В GUI должен отобразиться стартовый вывод: "Параметры запуска: vfs_path=vfs,
+# startup_script=scripts/startup.emulator."
+# Комментарии (# ...) отображаются в GUI без выполнения.
 
-echo "Тест с обоими параметрами:"
-python emulator.py --vfs_path vfs/minimal_vfs --startup_script scripts/startup.emulator
+# bash scripts/test_stage2.sh

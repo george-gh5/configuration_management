@@ -2,22 +2,31 @@ import tkinter as tk
 from tkinter import scrolledtext
 import os
 import socket
-from commands import execute_command
+import getpass
+import shlex
+
 from config import parse_args
+import commands as cmdmod
 
 
 class EmulatorGUI:
     def __init__(self):
-        # Парсинг аргументов
         args = parse_args()
         self.vfs_path = args.vfs_path
         self.startup_script = args.startup_script
 
-        self.root = tk.Tk()
-        self.root.title(f"Эмулятор - [{os.getlogin()}@{socket.gethostname()}]")
-        self.root.geometry("800x600")
+        # user and host
+        try:
+            self.user = getpass.getuser()
+        except Exception:
+            self.user = os.environ.get("USER", "user")
+        self.hostname = socket.gethostname()
 
-        self.output = scrolledtext.ScrolledText(self.root, state=tk.DISABLED)
+        self.root = tk.Tk()
+        self.root.title(f"Эмулятор - [{self.user}@{self.hostname}]")
+        self.root.geometry("900x600")
+
+        self.output = scrolledtext.ScrolledText(self.root, state=tk.DISABLED, wrap=tk.WORD)
         self.output.pack(fill=tk.BOTH, expand=True)
 
         self.entry = tk.Entry(self.root)
@@ -25,68 +34,118 @@ class EmulatorGUI:
         self.entry.bind("<Return>", self.on_enter)
         self.entry.focus()
 
-        self.prompt = f"{os.getlogin()}@{socket.gethostname()}$ "
+        # VFS state
+        self.vfs = {"type": "dir", "children": {}, "owner": "root"}
         self.current_dir = "/"
-        self.load_vfs(self.vfs_path)
+        self.prompt = f"{self.user}@{self.hostname}:{self.current_dir}$ "
+
+        self.print_output(f"Параметры запуска: vfs_path={self.vfs_path}, startup_script={self.startup_script}")
+
+        # load vfs (from disk into memory)
+        if os.path.exists(self.vfs_path) and os.path.isdir(self.vfs_path):
+            self.vfs = cmdmod.build_vfs_from_disk(self.vfs_path)
+            self.print_output(f"Загружен VFS из: {self.vfs_path}")
+        else:
+            self.print_output(f"VFS путь '{self.vfs_path}' не найден или не директория — загружен пустой VFS.")
 
         self.print_output(self.prompt, end="")
 
-        # Выполнение стартового скрипта
         if self.startup_script:
-            try:
-                with open(self.startup_script, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            self.print_output(self.prompt + line)
-                            args_list = line.split()
-                            if args_list:
-                                cmd = args_list[0]
-                                result = execute_command(cmd, args_list[1:], self)
-                                if result:
-                                    self.print_output(result)
-            except FileNotFoundError:
-                self.print_output(f"Ошибка: Скрипт {self.startup_script} не найден.")
-
-    def load_vfs(self, path):
-        self.vfs = {"/": {"type": "dir", "children": {}, "owner": "root"}}
-        try:
-            for root_dir, dirs, files in os.walk(path):
-                rel_path = os.path.relpath(root_dir, path).replace("\\", "/")
-                current = self.vfs["/"]
-                if rel_path != ".":
-                    parts = rel_path.split("/")
-                    for part in parts:
-                        if part:
-                            if part not in current["children"]:
-                                current["children"][part] = {"type": "dir", "children": {}, "owner": "root"}
-                            current = current["children"][part]
-                for file in files:
-                    file_path = os.path.join(root_dir, file)
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                    current["children"][file] = {"type": "file", "content": content, "owner": "root"}
-        except Exception as e:
-            self.print_output(f"Ошибка загрузки VFS: {str(e)}")
+            self._run_startup_script(self.startup_script)
 
     def print_output(self, text, end="\n"):
         self.output.config(state=tk.NORMAL)
-        self.output.insert(tk.END, text + end)
+        if text is None:
+            text = ""
+        self.output.insert(tk.END, str(text) + end)
         self.output.see(tk.END)
         self.output.config(state=tk.DISABLED)
 
     def on_enter(self, event):
-        command_line = self.entry.get().strip()
-        if command_line:
-            self.print_output(command_line)
-            args = command_line.split()
-            if args:
-                cmd = args[0]
-                result = execute_command(cmd, args[1:], self)
-                if result:
-                    self.print_output(result)
-            self.entry.delete(0, tk.END)
+        cmdline = self.entry.get()
+        self.entry.delete(0, tk.END)
+        if not cmdline.strip():
             self.print_output(self.prompt, end="")
+            return
+        self.print_output(self.prompt + cmdline)
+        try:
+            parts = shlex.split(cmdline)
+        except Exception as e:
+            self.print_output(f"Ошибка разбора команды: {e}")
+            self.print_output(self.prompt, end="")
+            return
+        cmd = parts[0]
+        args = parts[1:]
+        result = cmdmod.execute_command(cmd, args, self)
+
+        if cmd == "clear":
+            self.output.config(state=tk.NORMAL)
+            self.output.delete(1.0, tk.END)
+            self.output.config(state=tk.DISABLED)
+
+            self.print_output(self.prompt, end="")
+            return
+
+        if result is None:
+            try:
+                self.root.quit()
+            except Exception:
+                pass
+            return
+
+        if result != "":
+            self.print_output(result)
+        else:
+
+            pass
+
+        self.prompt = f"{self.user}@{self.hostname}:{self.current_dir}$ "
+        self.print_output(self.prompt, end="")
+
+    def _run_startup_script(self, path):
+        if not os.path.exists(path):
+            self.print_output(f"Ошибка: Скрипт {path} не найден.")
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                for raw in f:
+                    line = raw.rstrip("\n")
+                    if not line.strip():
+                        self.print_output("")
+                        continue
+                    if line.strip().startswith("#"):
+                        self.print_output(line)
+                        continue
+
+                    self.print_output(self.prompt + line)
+                    try:
+                        parts = shlex.split(line)
+                    except Exception as e:
+                        self.print_output(f"Ошибка разбора строки: {e}")
+                        continue
+                    cmd = parts[0]
+                    args = parts[1:]
+                    result = cmdmod.execute_command(cmd, args, self)
+                    if cmd == "clear":
+                        self.output.config(state=tk.NORMAL)
+                        self.output.delete(1.0, tk.END)
+                        self.output.config(state=tk.DISABLED)
+                        continue
+                    if result is None:
+
+                        try:
+                            self.root.quit()
+                        except Exception:
+                            pass
+                        return
+                    if result != "":
+                        self.print_output(result)
+
+                    self.prompt = f"{self.user}@{self.hostname}:{self.current_dir}$ "
+
+                self.print_output(self.prompt, end="")
+        except Exception as e:
+            self.print_output(f"Ошибка выполнения стартового скрипта: {e}")
 
     def run(self):
         self.root.mainloop()

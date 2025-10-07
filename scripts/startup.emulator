@@ -1,15 +1,31 @@
-ls -a cd /home unknown
-# Неизвестная команда
+# Демонстрация работы эмулятора
 
+# Код для запуска в терминале: python emulator.py --vfs_path vfs --startup_script scripts/startup.emulator
+
+# 1) показать корень
 ls
-# Проверяет текущую директорию (пока заглушка)
 
-cd /dir1
-# Для deep_vfs, проверка смены директории
+# 2) попытка зайти в несуществующую директорию
+cd no_such_dir
 
-ls cd /nonexistent
-# Ошибка (пока заглушка)
+# 3) перейти в существующую директорию из VFS
+cd deep_vfs
+ls
+cd dir1
+ls
+cd subdir
+ls
 
-# Чтобы скрипт не закрывался
-# exit
-# Выход
+# 4) создать файл (в папке subdir)
+touch new_from_script.txt
+ls
+
+# 5) изменить владельца
+chown Anton new_from_script.txt
+
+# 6) echo и cal (вывод текста и календаря) - кавычки необязательны для echo
+echo "Привет"
+cal
+
+# 7) очистить экран
+# clear

@@ -1,9 +1,19 @@
-#!/bin/bash
-echo "Тест с минимальным VFS:"
-python emulator.py --vfs_path vfs/minimal_vfs --startup_script scripts/startup.emulator
+#!/bin/sh
 
-echo "Тест с простым VFS (несколько файлов):"
-python emulator.py --vfs_path vfs/simple_vfs --startup_script scripts/startup.emulator
+python emulator.py --vfs_path vfs/minimal_vfs
+python emulator.py --vfs_path vfs/simple_vfs
+python emulator.py --vfs_path vfs/deep_vfs
 
-echo "Тест с глубоким VFS (3 уровня):"
-python emulator.py --vfs_path vfs/deep_vfs --startup_script scripts/startup.emulator
+# Для --vfs_path vfs/minimal_vfs:
+# ls -> пусто
+
+# Для --vfs_path vfs/simple_vfs:
+# ls -> file1.txt file2.txt
+# cat file1.txt -> выводит содержимое файла file1.txt
+
+# Для --vfs_path vfs/deep_vfs:
+# ls -> another_file.txt dir1/
+# cd dir1/subdir -> user@hostname:/dir1/subdir$
+# ls -> file.txt
+
+# bash scripts/test_stage3.sh

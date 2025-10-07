@@ -1,0 +1,1 @@
+Содержимое файла another_file.txt
