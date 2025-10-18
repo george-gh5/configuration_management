@@ -95,7 +95,7 @@ def cmd_ls(gui, args):
         elif path_arg is None:
             path_arg = a
     if not path_arg:
-        path_arg = "."
+        path_arg = ".."
     resolved = normalize_vfs_path(gui.current_dir, path_arg)
     node = get_node_by_path(gui.vfs, resolved)
     if node is None:

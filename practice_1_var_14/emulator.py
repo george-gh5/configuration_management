@@ -5,8 +5,8 @@ import socket
 import getpass
 import shlex
 
-from config import parse_args
-import commands as cmdmod
+from practice_1_var_14.config import parse_args
+from practice_1_var_14 import commands as cmdmod
 
 
 class EmulatorGUI:
