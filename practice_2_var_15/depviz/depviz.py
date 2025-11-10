@@ -89,7 +89,7 @@ def build_dependency_graph(root, deps_map, max_depth):
     return graph
 
 
-# Этап 4: Порядок загрузки: этап 4
+# Порядок загрузки: этап 4
 def get_load_order(graph, start_package):
     visited = set()
     subgraph = defaultdict(list)
@@ -121,24 +121,32 @@ def get_load_order(graph, start_package):
     return load_order
 
 
-# Этап 5: Визуализация: этап 5
+# Визуализация: этап 5
 def visualize_graph(graph, output_file="graph.png"):
+    graphs_dir = "graphs"
+    if not os.path.exists(graphs_dir):
+        os.makedirs(graphs_dir)
+
+    dot_file = os.path.join(graphs_dir, output_file.replace(".png", ".dot"))
+    png_base = os.path.join(graphs_dir, output_file.replace(".png", ""))
+
     dot_content = "digraph dependencies {\n"
     for pkg, deps in graph.items():
         for dep in deps:
             dot_content += f'    "{pkg}" -> "{dep}";\n'
     dot_content += "}"
-    dot_file = output_file.replace(".png", ".dot")
-    with open(dot_file, "w") as f:
+
+    with open(dot_file, "w", encoding="utf-8") as f:
         f.write(dot_content)
+
     try:
         import graphviz
         g = graphviz.Source(dot_content)
-        g.render(output_file.replace(".png", ""), format="png", cleanup=True)
-        print(f"Граф успешно сохранен в {output_file}")
+        g.render(png_base, format="png", cleanup=True)
+        print(f"Граф успешно сохранён в {png_base}.png")
     except ImportError:
         print("Установите graphviz: pip install graphviz")
-        print(f".dot файл сохранён как {dot_file}")
+        print(f"DOT файл сохранён: {dot_file}")
 
 
 def main():

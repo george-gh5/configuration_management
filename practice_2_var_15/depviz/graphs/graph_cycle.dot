@@ -1,5 +1,6 @@
 digraph dependencies {
     "X" -> "Y";
     "Y" -> "Z";
-    "Z" -> "X";
+    "Z" -> "W";
+    "W" -> "X";
 }
