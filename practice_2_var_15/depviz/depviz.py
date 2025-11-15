@@ -26,11 +26,12 @@ def parse_args():
 
 # Сбор данных: этап 2
 def fetch_apkindex(url):
-    tmp_file = "/tmp/APKINDEX.tar.gz"
+    tmp_file = "APKINDEX.tar.gz"
     try:
+        print(f"Скачиваю APKINDEX из {url} ...")
         urllib.request.urlretrieve(url, tmp_file)
-    except Exception:
-        print("Ошибка загрузки APKINDEX.tar.gz", file=sys.stderr)
+    except Exception as e:
+        print(f"Ошибка загрузки APKINDEX.tar.gz: {e}", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -39,9 +40,10 @@ def fetch_apkindex(url):
             if member is None:
                 raise Exception("APKINDEX not found inside archive")
             return member.read().decode("utf-8").splitlines()
-    except Exception:
-        print("Ошибка чтения APKINDEX", file=sys.stderr)
+    except Exception as e:
+        print(f"Ошибка чтения APKINDEX: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 
 def parse_apk_dependencies(index_lines):

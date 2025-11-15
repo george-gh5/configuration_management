@@ -1,11 +1,15 @@
 # repo_simple.txt
 
-python depviz.py --package A --repo test_repos/repo_simple.txt --mode test --output graph_simple.png --depth 3
+py depviz.py --package A --repo test_repos/repo_simple.txt --mode test --output graph_simple.png --depth 3
 
 # repo_cycle.txt
 
-python depviz.py --package X --repo test_repos/repo_cycle.txt --mode test --output graph_cycle.png --depth 5
+py depviz.py --package X --repo test_repos/repo_cycle.txt --mode test --output graph_cycle.png --depth 5
 
 # repo_complex.txt
 
-python depviz.py --package M --repo test_repos/repo_complex.txt --mode test --output graph_complex.png --depth 4
+py depviz.py --package M --repo test_repos/repo_complex.txt --mode test --output graph_complex.png --depth 4
+
+# Проверка с реальным APK репозиторием
+
+py depviz.py --package alpine-baselayout --repo https://dl-cdn.alpinelinux.org/alpine/v3.19/main/x86_64/APKINDEX.tar.gz --mode remote --output alpine.png --depth 3

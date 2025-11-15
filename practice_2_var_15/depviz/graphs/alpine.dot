@@ -1,0 +1,4 @@
+digraph dependencies {
+    "alpine-baselayout" -> "alpine-baselayout-data=3.4.3-r2";
+    "alpine-baselayout" -> "/bin/sh";
+}
